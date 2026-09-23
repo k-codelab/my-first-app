@@ -1,11 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ja">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>NEON RUNNER | 横スクロールアクション</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    ようこそ
+  <main class="game-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MVP / SIDE-SCROLL ACTION</p>
+        <h1>NEON <span>RUNNER</span></h1>
+      </div>
+      <div class="status-pill"><i></i> ONLINE</div>
+    </header>
+
+    <section class="game-card" aria-label="ゲーム画面">
+      <div class="hud">
+        <div class="hud-group">
+          <div class="hud-item"><span class="label">SCORE</span><strong id="score">000000</strong></div>
+          <div class="hud-item"><span class="label">COINS</span><strong id="coins">0 / 8</strong></div>
+        </div>
+        <div class="hud-item progress-wrap">
+          <span class="label">DISTANCE</span>
+          <div class="progress"><span id="progress"></span></div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" aria-label="NEON RUNNERのゲームキャンバス"></canvas>
+        <div id="message" class="message hidden" role="status">
+          <p class="message-kicker">MISSION COMPLETE</p>
+          <h2 id="messageTitle">GOAL REACHED</h2>
+          <p id="messageBody">すべてのコインを集めました。</p>
+          <button id="restartButton" type="button">もう一度プレイ <span>↻</span></button>
+        </div>
+      </div>
+
+      <footer class="controls">
+        <p><kbd>A</kbd><kbd>D</kbd> または <kbd>←</kbd><kbd>→</kbd> 移動</p>
+        <p><kbd>W</kbd><kbd>↑</kbd><kbd>SPACE</kbd> ジャンプ</p>
+        <p class="objective"><span class="dot"></span>コインを集めてゴールへ</p>
+      </footer>
+    </section>
+    <p class="tip">TIP: 敵は上から踏むと倒せる。画面外に落ちると最初からやり直し。</p>
+  </main>
+  <script src="game.js"></script>
 </body>
 </html>
