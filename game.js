@@ -127,11 +127,69 @@ function draw() {
   ctx.globalAlpha = 1; ctx.restore();
 }
 function drawBackdrop(w, h) {
-  ctx.save(); ctx.translate(game.camera * .15, 0);
-  ctx.fillStyle = "#1c3050";
-  for (let x = -300; x < WORLD_WIDTH + 500; x += 210) { ctx.beginPath(); ctx.moveTo(x, 330); ctx.lineTo(x + 105, 130); ctx.lineTo(x + 250, 330); ctx.fill(); }
-  ctx.strokeStyle = "#294263"; ctx.lineWidth = 1;
-  for (let y = 70; y < 310; y += 48) { ctx.beginPath(); ctx.moveTo(-100, y); ctx.lineTo(WORLD_WIDTH, y); ctx.stroke(); }
+  ctx.save();
+  ctx.translate(game.camera * .15, 0);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, "#080d1d");
+  sky.addColorStop(.5, "#101a36");
+  sky.addColorStop(1, "#17294a");
+  ctx.fillStyle = sky;
+  ctx.fillRect(-400, 0, WORLD_WIDTH + 800, h);
+
+  const glow = ctx.createRadialGradient(790, 120, 10, 790, 120, 220);
+  glow.addColorStop(0, "#57e9e044");
+  glow.addColorStop(1, "#57e9e000");
+  ctx.fillStyle = glow;
+  ctx.fillRect(520, -80, 540, 450);
+
+  ctx.fillStyle = "#d8f7ff";
+  for (let x = -180; x < WORLD_WIDTH + 400; x += 83) {
+    const y = 42 + ((x * 17) % 175 + 175) % 175;
+    const size = x % 5 === 0 ? 2 : 1;
+    ctx.globalAlpha = .35 + ((x * 7) % 4) * .12;
+    ctx.fillRect(x, y, size, size);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = "#18294a";
+  for (let x = -300; x < WORLD_WIDTH + 500; x += 210) {
+    ctx.beginPath();
+    ctx.moveTo(x, 330);
+    ctx.lineTo(x + 105, 130);
+    ctx.lineTo(x + 250, 330);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = "#0a1226";
+  for (let x = -120; x < WORLD_WIDTH + 500; x += 118) {
+    const buildingHeight = 48 + ((x * 13) % 100 + 100) % 100;
+    const y = 330 - buildingHeight;
+    ctx.fillRect(x, y, 82, buildingHeight);
+    ctx.fillStyle = "#57e9e033";
+    for (let windowY = y + 14; windowY < 320; windowY += 19) {
+      ctx.fillRect(x + 12, windowY, 4, 7);
+      ctx.fillRect(x + 29, windowY, 4, 7);
+      ctx.fillRect(x + 59, windowY, 4, 7);
+    }
+    ctx.fillStyle = "#0a1226";
+  }
+
+  ctx.strokeStyle = "#57e9e033";
+  ctx.lineWidth = 1;
+  for (let y = 70; y < 310; y += 48) {
+    ctx.beginPath();
+    ctx.moveTo(-100, y);
+    ctx.lineTo(WORLD_WIDTH, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "#57e9e044";
+  for (let x = -300; x < WORLD_WIDTH + 500; x += 70) {
+    ctx.beginPath();
+    ctx.moveTo(x, 330);
+    ctx.lineTo(x + 40, 215);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 function drawPlatform(p) {
@@ -159,10 +217,42 @@ function drawGoal() {
 }
 function drawPlayer() {
   const p = game.player, step = p.grounded ? Math.sin(game.time * .25) * 2 : 0;
-  ctx.fillStyle = "#f3f7ff"; ctx.fillRect(p.x, p.y + 8, p.width, p.height - 8);
-  ctx.fillStyle = "#57e9e0"; ctx.fillRect(p.x - 2, p.y + 4, p.width + 4, 10);
-  ctx.fillStyle = "#101827"; ctx.fillRect(p.x + (p.facing > 0 ? 17 : 4), p.y + 7, 5, 5);
-  ctx.fillStyle = "#ff5c8d"; ctx.fillRect(p.x + 4, p.y + p.height - 4 + step, 7, 5); ctx.fillRect(p.x + 18, p.y + p.height - 4 - step, 7, 5);
+  const moving = Math.abs(p.vx) > .25 && p.grounded;
+  const lean = p.facing * Math.min(2, Math.abs(p.vx) * .25);
+  ctx.save();
+  ctx.translate(p.x + p.width / 2, p.y);
+  ctx.rotate(lean * .025);
+  ctx.shadowColor = "#57e9e0";
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = "#57e9e033";
+  ctx.fillRect(-17, 8, 34, 29);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = "#dcecff";
+  ctx.fillRect(-14, 12, 28, 25);
+  ctx.fillStyle = "#8aa6c9";
+  ctx.fillRect(-12, 17, 24, 3);
+  ctx.fillStyle = "#57e9e0";
+  ctx.fillRect(-16, 4, 32, 11);
+  ctx.fillStyle = "#101827";
+  ctx.fillRect(p.facing > 0 ? 2 : -7, 7, 9, 5);
+  ctx.fillStyle = "#b9ffff";
+  ctx.fillRect(p.facing > 0 ? 4 : -6, 8, 4, 2);
+
+  ctx.fillStyle = "#ff5c8d";
+  ctx.fillRect(-12, 34 + step, 8, 5);
+  ctx.fillRect(4, 34 - step, 8, 5);
+  ctx.fillStyle = "#57e9e0";
+  ctx.fillRect(-13, 39 + step, 10, 2);
+  ctx.fillRect(3, 39 - step, 10, 2);
+
+  if (moving || !p.grounded) {
+    ctx.fillStyle = "#ffd166";
+    ctx.globalAlpha = .8;
+    ctx.fillRect(p.facing > 0 ? -18 : 14, 25, 4, 4);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
 }
 
 window.addEventListener("keydown", (event) => {
