@@ -10,6 +10,7 @@ const restartButton = document.getElementById("restartButton");
 
 const WORLD_WIDTH = 4200;
 const keys = {};
+let audioContext;
 let game;
 
 const levelPlatforms = [
@@ -32,6 +33,44 @@ function resetGame() {
   };
   message.classList.add("hidden");
   updateHud();
+}
+
+function getAudioContext() {
+  if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioContext = new AudioContext();
+  }
+  if (audioContext?.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function playSound(type) {
+  const audio = getAudioContext();
+  if (!audio) return;
+  const sounds = {
+    jump: { frequency: 420, endFrequency: 680, duration: .12, wave: "square", volume: .035 },
+    coin: { frequency: 760, endFrequency: 1180, duration: .1, wave: "sine", volume: .045 },
+    defeat: { frequency: 220, endFrequency: 90, duration: .2, wave: "sawtooth", volume: .04 },
+    hit: { frequency: 110, endFrequency: 55, duration: .22, wave: "sawtooth", volume: .05 },
+    win: { frequency: 520, endFrequency: 1040, duration: .35, wave: "sine", volume: .045 },
+    fall: { frequency: 180, endFrequency: 55, duration: .3, wave: "triangle", volume: .04 },
+    restart: { frequency: 300, endFrequency: 520, duration: .12, wave: "triangle", volume: .03 }
+  };
+  const sound = sounds[type];
+  if (!sound) return;
+  const now = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = sound.wave;
+  oscillator.frequency.setValueAtTime(sound.frequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(sound.endFrequency, now + sound.duration);
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(sound.volume, now + .01);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + sound.duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(now);
+  oscillator.stop(now + sound.duration + .02);
 }
 
 function resize() {
@@ -67,7 +106,11 @@ function update() {
   if (right) { p.vx += .55; p.facing = 1; }
   if (!left && !right) p.vx *= .8;
   p.vx = Math.max(-5.5, Math.min(5.5, p.vx));
-  if ((keys.ArrowUp || keys.w || keys[" "]) && p.grounded) { p.vy = -12; p.grounded = false; }
+  if ((keys.ArrowUp || keys.w || keys[" "]) && p.grounded) {
+    p.vy = -12;
+    p.grounded = false;
+    playSound("jump");
+  }
   keys[" "] = false;
   p.vy += .55;
   p.x += p.vx;
@@ -82,21 +125,41 @@ function update() {
   }
   for (const coin of game.coins) {
     const c = { x: coin[0] ?? coin.x, y: coin[1] ?? coin.y, width: 20, height: 20 };
-    if (!coin.collected && overlap(p, c)) { coin.collected = true; game.collected++; game.score += 100; addBurst(c.x + 10, c.y + 10, "#ffd166"); }
+    if (!coin.collected && overlap(p, c)) {
+      coin.collected = true;
+      game.collected++;
+      game.score += 100;
+      addBurst(c.x + 10, c.y + 10, "#ffd166");
+      playSound("coin");
+    }
   }
   for (const enemy of game.enemies) {
     enemy.x += enemy.vx;
     if (enemy.x < enemy.min || enemy.x > enemy.max) enemy.vx *= -1;
     if (overlap(p, enemy)) {
-      if (p.vy > 0 && p.y + p.height < enemy.y + 18) { enemy.defeated = true; p.vy = -8; game.score += 250; addBurst(enemy.x + 17, enemy.y + 15, "#ff5c8d"); }
-      else if (!enemy.defeated) return endGame(false, "TRY AGAIN", "敵にぶつかってしまいました。");
+      if (p.vy > 0 && p.y + p.height < enemy.y + 18) {
+        enemy.defeated = true;
+        p.vy = -8;
+        game.score += 250;
+        addBurst(enemy.x + 17, enemy.y + 15, "#ff5c8d");
+        playSound("defeat");
+      } else if (!enemy.defeated) {
+        playSound("hit");
+        return endGame(false, "TRY AGAIN", "敵にぶつかってしまいました。");
+      }
     }
   }
   game.enemies = game.enemies.filter((enemy) => !enemy.defeated);
   game.camera += (p.x - game.camera - canvas.clientWidth * .35) * .08;
   game.camera = Math.max(0, Math.min(WORLD_WIDTH - canvas.clientWidth, game.camera));
-  if (p.y > 500) return endGame(false, "FALLEN", "足場を見失いました。");
-  if (p.x > WORLD_WIDTH - 150) endGame(true, "GOAL REACHED", `${game.collected}枚のコインを集めてゴールしました。`);
+  if (p.y > 500) {
+    playSound("fall");
+    return endGame(false, "FALLEN", "足場を見失いました。");
+  }
+  if (p.x > WORLD_WIDTH - 150) {
+    playSound("win");
+    endGame(true, "GOAL REACHED", `${game.collected}枚のコインを集めてゴールしました。`);
+  }
   game.particles.forEach((part) => { part.x += part.vx; part.y += part.vy; part.vy += .15; part.life -= .035; });
   game.particles = game.particles.filter((part) => part.life > 0);
   updateHud();
@@ -260,7 +323,10 @@ window.addEventListener("keydown", (event) => {
   keys[event.key] = true;
 });
 window.addEventListener("keyup", (event) => { keys[event.key] = false; });
-restartButton.addEventListener("click", resetGame);
+restartButton.addEventListener("click", () => {
+  playSound("restart");
+  resetGame();
+});
 
 resetGame();
 resize();
