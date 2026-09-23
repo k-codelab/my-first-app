@@ -38,7 +38,7 @@ h1 span { color: var(--cyan); }
 .hud-item { display: flex; flex-direction: column; gap: 3px; }
 .label { color: var(--muted); font: 600 10px "Barlow Condensed", sans-serif; letter-spacing: .16em; }
 .hud strong { font: 700 22px/1 "Barlow Condensed", sans-serif; letter-spacing: .05em; }
-#score { font-size: clamp(30px, 4vw, 42px); text-shadow: 0 0 14px #57e9e088; }
+#score, #coins { font-size: clamp(30px, 4vw, 42px); text-shadow: 0 0 14px #57e9e088; }
 .progress-wrap { width: min(260px, 35%); }
 .progress { height: 5px; margin-top: 5px; overflow: hidden; border-radius: 5px; background: #26334b; }
 .progress span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); transition: width .15s; }
@@ -64,7 +64,7 @@ kbd { display: inline-grid; min-width: 20px; height: 20px; margin-right: 3px; pl
   .hud { padding: 12px 14px; }
   .hud-group { gap: 16px; }
   .hud strong { font-size: 18px; }
-  #score { font-size: 30px; }
+  #score, #coins { font-size: 30px; }
   .progress-wrap { width: 28%; }
   .controls { flex-wrap: wrap; gap: 8px 14px; padding: 12px 14px; }
   .objective { width: 100%; margin-left: 0 !important; }
