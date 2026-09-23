@@ -11,6 +11,8 @@ const restartButton = document.getElementById("restartButton");
 const WORLD_WIDTH = 4200;
 const keys = {};
 let audioContext;
+let bgmTimer;
+let bgmStep = 0;
 let game;
 
 const levelPlatforms = [
@@ -73,6 +75,41 @@ function playSound(type) {
   oscillator.stop(now + sound.duration + .02);
 }
 
+function playBgmNote(frequency, duration, volume, wave = "triangle") {
+  const audio = getAudioContext();
+  if (!audio) return;
+  const now = audio.currentTime;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+  oscillator.type = wave;
+  oscillator.frequency.setValueAtTime(frequency, now);
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(volume, now + .015);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration + .02);
+}
+
+function startBgm() {
+  if (bgmTimer || !getAudioContext()) return;
+  const melody = [220, 277.18, 329.63, 415.3, 329.63, 277.18, 246.94, 329.63];
+  bgmStep = 0;
+  bgmTimer = window.setInterval(() => {
+    const note = melody[bgmStep % melody.length];
+    playBgmNote(note, .2, .012);
+    if (bgmStep % 2 === 0) playBgmNote(note / 2, .22, .018, "sine");
+    bgmStep++;
+  }, 240);
+}
+
+function stopBgm() {
+  if (!bgmTimer) return;
+  window.clearInterval(bgmTimer);
+  bgmTimer = undefined;
+}
+
 function resize() {
   const ratio = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -90,6 +127,7 @@ function addBurst(x, y, color) {
 }
 function endGame(won, title, body) {
   game.state = won ? "won" : "lost";
+  stopBgm();
   messageTitle.textContent = title;
   messageBody.textContent = body;
   message.querySelector(".message-kicker").textContent = won ? "MISSION COMPLETE" : "RUN ENDED";
@@ -320,11 +358,13 @@ function drawPlayer() {
 
 window.addEventListener("keydown", (event) => {
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+  startBgm();
   keys[event.key] = true;
 });
 window.addEventListener("keyup", (event) => { keys[event.key] = false; });
 restartButton.addEventListener("click", () => {
   playSound("restart");
+  startBgm();
   resetGame();
 });
 
